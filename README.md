@@ -1,92 +1,98 @@
-# Castle-Guardian-VR
+# Castle Guardian VR - 활 조작과 웨이브 방어를 VR 입력에 맞춰 연결한 디펜스
 
-> 본 저장소는 포트폴리오 공개용으로 소스 코드와 기술 문서 중심으로 정리한 버전입니다. 원본 프로젝트의 외부 에셋, 사운드, 모델, 씬 파일은 저작권과 용량 문제로 제외했습니다.
+![Unity](https://img.shields.io/badge/Unity-222222?style=flat-square&logo=unity&logoColor=white) ![C#](https://img.shields.io/badge/C%23-68217A?style=flat-square&logo=csharp&logoColor=white) ![Meta XR](https://img.shields.io/badge/Meta_XR_SDK-0467DF?style=flat-square&logo=meta&logoColor=white) ![Solo](https://img.shields.io/badge/1인-개발-555555?style=flat-square) [![YouTube](https://img.shields.io/badge/YouTube-플레이_영상-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://youtu.be/KxXcOsSTjww)
 
-Unity 기반 VR 디펜스 게임 포트폴리오입니다. 플레이어가 VR 환경에서 활을 조작해 적 웨이브를 막고, 타워와 화살을 활용해 성을 방어하는 구조로 제작했습니다.
+> 본 저장소는 포트폴리오 공개용 **코드 열람 저장소**입니다. 원본 프로젝트의 외부 에셋, 사운드, 모델, 씬 파일은 저작권과 용량 문제로 제외했으므로 Unity에서 그대로 실행되지 않습니다. 실제 플레이는 아래 영상으로 확인해 주세요.
 
-> VR 입력, 투사체, 웨이브, 적 AI, 타워, 오브젝트 풀링, ScriptableObject 데이터 분리 등 클라이언트 시스템 구현 경험을 보여주기 위한 개인 프로젝트입니다.
+[![Castle Guardian VR 플레이 영상](https://img.youtube.com/vi/KxXcOsSTjww/maxresdefault.jpg)](https://youtu.be/KxXcOsSTjww)
+
+▶︎ [플레이 영상](https://youtu.be/KxXcOsSTjww) · 📄 [기술문서 PDF](https://drive.google.com/file/d/1QAfVO60DJtMbQT3aGXmA1sMr7wmtxyMy/view?usp=sharing) · 👤 [GitHub 프로필](https://github.com/Femur-0607)
 
 ## 프로젝트 정보
 
 | 항목 | 내용 |
 | --- | --- |
-| 장르 | VR 디펜스 |
-| 개발 형태 | 개인 프로젝트 |
-| 개발 도구 | Unity |
-| 주요 기술 | C#, Meta XR SDK, XR Interaction Toolkit, NavMesh, ScriptableObject, Object Pooling |
-| 플랫폼 | PC VR / Meta Quest 계열 테스트 목적 |
+| 장르 | 3D VR 타워 디펜스 |
+| 개발 기간 | 2025.03 – 2025.04 (8주) |
+| 개발 형태 | 1인 프로젝트 |
+| 개발 환경 | Unity 6000.0.32f1, C#, Meta XR SDK |
+| 플랫폼 | PC VR / Meta Quest 계열 |
+| 주요 기술 | VR 입력, 투사체 궤적, 웨이브·스폰, NavMesh, ScriptableObject, Unity ObjectPool API |
+| 상태 | 완료 (플레이 가능 빌드 기준, 영상 참고) |
 
-## 포트폴리오 포인트
+VR 환경에서 활을 당겨 화살을 쏘고 타워를 설치해 적 웨이브로부터 성을 지키는 게임입니다. PC용 핵심 시스템(투사체·웨이브·타워)을 먼저 만든 뒤, VR 컨트롤러 입력과 피드백을 붙이는 순서로 개발했습니다.
 
-- VR 환경에서 활 조작, 시선/입력 처리, 투사체 발사 흐름을 구현했습니다.
-- 적 웨이브, 스폰, 진형, 이동, 성 공격 흐름을 시스템 단위로 분리했습니다.
-- 타워 설치와 업그레이드, 화살 타입, 투사체 효과를 상속 구조와 데이터 기반으로 관리했습니다.
-- ScriptableObject로 적, 타워, 투사체, 웨이브 데이터를 분리해 밸런싱과 확장성을 확보했습니다.
-- 오브젝트 풀링으로 적, 투사체, 파티클, 오디오 소스의 반복 생성 비용을 줄였습니다.
+## 담당 범위
 
-## 주요 구현
+1인 프로젝트로 기획·구현·테스트를 모두 진행했습니다.
 
-### VR 상호작용
+- VR 입력(트리거 당김 세기)과 화살 발사, 포물선 궤적 표시
+- `Projectile` 추상 클래스와 Normal / Poison / Explosive 화살 분리
+- 타입별 `IObjectPool<Projectile>`을 가진 `ProjectilePool`, 적·파티클·오디오 풀
+- `WaveManager` → `SpawnManager` → `Enemy` 흐름과 `FormationManager` 진형 배치
+- `Tower` 공통 로직과 Archer / Explosive / Slow 타워 파생, `BuildManager` 설치
+- Enemy / Tower / Projectile / Wave 데이터를 ScriptableObject로 분리
+- 외부 에셋: Meta XR SDK 샘플, 포물선 궤적 에셋, 3D 모델·사운드(공개본에서 제외)
 
-- Meta XR SDK와 XR Interaction Toolkit을 활용해 VR 환경에서 플레이어 입력과 시점 제어를 구성했습니다.
-- 활 조준, 화살 발사, 투사체 궤적 표현 등 VR 기반 조작 흐름을 구현했습니다.
-- 일반 화살, 독 화살, 폭발 화살 등 화살 타입별 동작을 분리했습니다.
+## 핵심 구현
 
-### 투사체 시스템
+### 1. 당김 세기를 속도로 바꾸는 VR 활 입력
 
-- `Projectile` 기반 클래스를 중심으로 공통 이동, 충돌, 데미지 처리를 구성했습니다.
-- `NormalArrow`, `PoisonArrow`, `ExplosiveArrow`로 화살별 효과를 분리했습니다.
-- 포물선 궤적 시각화와 충돌 후 이펙트 처리를 연결했습니다.
+**문제.** PC에서는 마우스 클릭 한 번이 발사였지만 VR에서는 "당기는 중"이라는 중간 상태가 생기고, 조준 결과가 바로 보이지 않으면 조작이 불안합니다.
 
-### 적 AI와 웨이브 시스템
+**선택.** 발사를 `OnFireStart` → `OnFireCharging` → `OnFireRelease` 세 단계로 나누고, 당김 정도를 `minSpeed`~`maxSpeed`로 보간해 초기 속도를 정했습니다. 당기는 동안 `ProjectileCurveVisualizer`가 LineRenderer로 포물선과 예상 충돌 지점을 그립니다.
 
-- `WaveManager`, `SpawnManager`, `FormationManager`를 통해 적 생성과 웨이브 진행을 관리했습니다.
-- 적 데이터는 ScriptableObject로 분리해 체력, 이동 속도, 보상, 타입별 속성을 관리했습니다.
-- NavMesh 기반 이동을 활용해 적이 목표 지점으로 이동하고 성을 공격하도록 구성했습니다.
+**결과.** 발사 전에 궤적이 보이므로 플레이어가 힘 조절을 예측할 수 있습니다. 세 단계가 분리돼 있어 화살 타입을 바꿔도 입력 코드는 손대지 않습니다.
 
-### 타워 시스템
+- [ArrowShooter.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/02.BowArrow/ArrowShooter.cs) · [ProjectileCurveVisualizer.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/02.BowArrow/ProjectileCurveVisualizer.cs)
 
-- `Tower` 기반 클래스를 중심으로 공통 공격 로직을 구성했습니다.
-- `ArcherTower`, `ExplosiveTower`, `SlowTower`로 타워 역할을 분리했습니다.
-- `BuildManager`와 `BuildableNode`를 통해 타워 설치 위치와 설치 가능 여부를 관리했습니다.
+### 2. 화살 타입별 풀과 재사용 전 상태 초기화
 
-### 데이터와 최적화
+**문제.** 화살·적·파티클·오디오가 반복 생성·파괴되고, 재사용한 화살에 이전 발사의 속도·충돌 상태가 남으면 엉뚱한 궤적이 나옵니다.
 
-- Enemy, Tower, Projectile, Wave 데이터를 ScriptableObject로 분리했습니다.
-- Enemy, Projectile, Particle, AudioSource 풀을 구성해 런타임 생성/삭제 부담을 줄였습니다.
-- SoundDatabase와 AudioSourcePool을 활용해 사운드 재생 흐름을 관리했습니다.
+**선택.** `ProjectilePool`이 화살 타입을 키로 `Dictionary<ProjectileType, IObjectPool<Projectile>>`을 보관하고, 꺼낼 때와 반환할 때 모두 `Projectile.ResetState()`를 호출합니다. `ResetState`는 자식 변환·속도·각속도·충돌·생성 시각·데미지를 초기화합니다. 적 풀은 활성화·위치만 맡고, 데이터 주입과 `Enemy.ResetState`는 `SpawnManager`가 합니다.
+
+**결과.** 현재 선택한 화살 타입에 맞는 풀에서 바로 꺼내 쓰고, 재사용 시 잔류 상태 문제가 코드 경로상 차단됩니다.
+
+- [ProjectilePool.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/06.ObjectPool/ProjectilePool.cs) · [Projectile.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/02.BowArrow/Projectile.cs) · [EnemyPool.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/06.ObjectPool/EnemyPool.cs)
+
+### 3. 데이터로 정의한 웨이브와 코루틴 기반 진행
+
+**문제.** 웨이브마다 스폰 지점·적 종류·간격이 달라 코드에 직접 쓰면 밸런스 조정 때마다 재빌드가 필요합니다.
+
+**선택.** `WaveData`에 스폰 패턴 목록을 두고, `WaveManager.ProcessWave`가 패턴마다 `SpawnEnemiesForPattern` 코루틴을 띄운 뒤 전부 끝나기를 기다립니다. 생존 적 수가 0이 되면 웨이브 종료 이벤트를 `EventManager`로 발행하고 보스전으로 넘어갑니다.
+
+**결과.** 웨이브 구성은 Inspector의 ScriptableObject에서 바꾸고, 진행 로직은 하나의 코루틴 흐름으로 읽힙니다.
+
+- [WaveManager.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/01.WaveSystem/WaveManager.cs) · [WaveData.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/04.ScriptableObject/WaveData.cs) · [SpawnManager.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/01.WaveSystem/SpawnManager.cs)
+
+## 트러블슈팅 — 처음 다루는 VR 입력을 작은 단위로 검증
+
+VR 개발 경험이 없어 입력·상호작용·발사를 한 번에 붙이면 어디서 문제가 나는지 알 수 없었습니다. Meta 공식 문서와 샘플을 기준으로 **컨트롤러 입력 읽기 → 당김 상태 표시 → 궤적 표시 → 실제 발사** 순서로 하나씩 확인하며 붙였습니다. 각 단계가 독립적으로 동작한 뒤에야 다음 단계를 연결했기 때문에, 발사가 안 될 때 입력 문제인지 궤적 계산 문제인지 바로 구분할 수 있었습니다.
 
 ## 프로젝트 구조
 
 ```text
-Assets/
-├── 06.Scripts
-│   ├── 00.System             # GameManager, UIManager, SoundManager 등 공통 시스템
-│   ├── 01.WaveSystem         # 적 생성, 웨이브, 진형 관리
-│   ├── 02.BowArrow           # VR 활 조작, 화살, 투사체
-│   ├── 03.Tower              # 타워 설치 및 타워별 공격 로직
-│   ├── 04.ScriptableObject   # 적, 타워, 투사체, 웨이브 데이터
-│   ├── 05.Interface          # 데미지, 투사체, 업그레이드 인터페이스
-│   └── 06.ObjectPool         # 적, 투사체, 파티클, 오디오 풀링
-├── Packages                  # Unity 패키지 정보
-└── ProjectSettings           # 프로젝트 설정
+Assets/06.Scripts/
+├── 00.System          # GameManager, EventManager, UIManager, SoundManager, 풀 매니저
+├── 01.WaveSystem      # WaveManager, SpawnManager, FormationManager, Enemy, Boss
+├── 02.BowArrow        # ArrowShooter, Projectile 계열, 궤적 시각화
+├── 03.Tower           # Tower 계열, BuildManager, BuildableNode
+├── 04.ScriptableObject# Enemy / Tower / Projectile / Wave / Sound 데이터
+├── 05.Interface       # IDamageable, IProjectile, IUpgradeable
+└── 06.ObjectPool      # Projectile / Enemy / Particle / AudioSource 풀
 ```
 
-## 실행 방법
+## 알고 있는 한계와 다음 과제
 
-1. Unity Hub에서 프로젝트를 엽니다.
-2. XR 관련 패키지와 Meta/Oculus 환경 설정을 확인합니다.
-3. VR 장비 연결 또는 XR 시뮬레이터 환경에서 시작 씬을 실행합니다.
+- `ProjectilePool`은 `collectionCheck`를 끄고 있고 `ReturnToPool`에 독립적인 반환 가드가 없습니다. 같은 프레임에 수명 만료와 충돌이 겹칠 때 이중 반환이 없는지 별도 검증 장면으로 확인할 계획입니다.
+- 풀링으로 생성·파괴 호출은 줄었지만 FPS·GC 수치는 측정하지 않았습니다. 수치는 측정 후에만 적습니다.
+- Unity ObjectPool의 `defaultCapacity`는 미리 생성 개수가 아니라 내부 저장 용량입니다. 코드 주석 일부가 이를 혼동하고 있어 정리할 예정입니다.
 
-## 개발하며 배운 점
+## 공개 범위와 확인 방법
 
-- VR 프로젝트는 일반 PC 게임보다 입력, 시점, 상호작용 피드백을 더 명확하게 분리해야 한다는 점을 배웠습니다.
-- 웨이브, 적 AI, 타워, 투사체처럼 서로 연결되는 시스템은 데이터 구조와 이벤트 흐름을 먼저 정리해야 유지보수가 쉬워진다는 점을 체감했습니다.
-- 반복 생성되는 객체는 풀링 구조로 관리해야 VR 환경에서 프레임 안정성을 확보하는 데 도움이 된다는 점을 확인했습니다.
+- 이 저장소는 **코드 열람용**입니다. 씬·프리팹·에셋이 없어 Unity Hub에서 열어도 플레이할 수 없습니다.
+- 플레이 결과는 [영상](https://youtu.be/KxXcOsSTjww), 구현 설명은 [기술문서 PDF](https://drive.google.com/file/d/1QAfVO60DJtMbQT3aGXmA1sMr7wmtxyMy/view?usp=sharing)를 참고해 주세요.
+- 코드 링크는 커밋 `32f4f29`에 고정돼 있어 이후 변경과 무관하게 같은 내용을 가리킵니다.
 
-## 개선 예정
-
-- README에 플레이 영상과 기술 문서 링크 추가
-- VR 입력 튜토리얼 및 조작 안내 UI 보강
-- 타워 밸런싱 데이터 정리
-- 불필요한 외부 에셋과 긴 경로를 정리해 저장소 checkout 안정성 개선
+© 2026 Yang Ji-seop. Portfolio use only.
