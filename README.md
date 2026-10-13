@@ -20,13 +20,13 @@
 | 주요 기술 | VR 입력, 투사체 궤적, 웨이브·스폰, NavMesh, ScriptableObject, Unity ObjectPool API |
 | 상태 | 완료 (플레이 가능 빌드 기준, 영상 참고) |
 
-VR 환경에서 활을 당겨 화살을 쏘고 타워를 설치해 적 웨이브로부터 성을 지키는 게임입니다. PC용 핵심 시스템(투사체·웨이브·타워)을 먼저 만든 뒤, VR 컨트롤러 입력과 피드백을 붙이는 순서로 개발했습니다.
+VR 환경에서 트리거로 차징한 화살을 쏘고 타워를 설치해 적 웨이브로부터 성을 지키는 게임입니다. PC용 핵심 시스템(투사체·웨이브·타워)을 먼저 만든 뒤, VR 컨트롤러 입력과 피드백을 붙이는 순서로 개발했습니다.
 
 ## 담당 범위
 
 1인 프로젝트로 기획·구현·테스트를 모두 진행했습니다.
 
-- VR 입력(트리거 당김 세기)과 화살 발사, 포물선 궤적 표시
+- VR 입력(트리거 유지 시간 차징)과 화살 발사, 포물선 궤적 표시
 - `Projectile` 추상 클래스와 Normal / Poison / Explosive 화살 분리
 - 타입별 `IObjectPool<Projectile>`을 가진 `ProjectilePool`, 적·파티클·오디오 풀
 - `WaveManager` → `SpawnManager` → `Enemy` 흐름과 `FormationManager` 진형 배치
@@ -36,11 +36,11 @@ VR 환경에서 활을 당겨 화살을 쏘고 타워를 설치해 적 웨이브
 
 ## 핵심 구현
 
-### 1. 당김 세기를 속도로 바꾸는 VR 활 입력
+### 1. 트리거 유지 시간을 발사 세기로 바꾸는 VR 활 입력
 
-**문제.** PC에서는 마우스 클릭 한 번이 발사였지만 VR에서는 "당기는 중"이라는 중간 상태가 생기고, 조준 결과가 바로 보이지 않으면 조작이 불안합니다.
+**문제.** VR에서는 트리거를 누르고 유지한 뒤 놓는 입력을 구분해야 하고, 조준 결과가 바로 보이지 않으면 조작이 불안합니다.
 
-**선택.** 발사를 `OnFireStart` → `OnFireCharging` → `OnFireRelease` 세 단계로 나누고, 당김 정도를 `minSpeed`~`maxSpeed`로 보간해 초기 속도를 정했습니다. 당기는 동안 `ProjectileCurveVisualizer`가 LineRenderer로 포물선과 예상 충돌 지점을 그립니다.
+**선택.** 발사를 `OnFireStart` → `OnFireCharging` → `OnFireRelease` 세 단계로 나누고, 트리거 유지 시간을 누적해 `chargeTimer / chargeTime`을 0~1로 제한했습니다. 이 값으로 `minSpeed`~`maxSpeed` 사이의 발사 세기를 보간하고, 차징 중 `ProjectileCurveVisualizer`가 LineRenderer로 궤적과 예상 충돌 지점을 표시하도록 했습니다. `chargeTime`의 코드 기본값은 1.5초입니다.
 
 **결과.** 발사 전에 궤적이 보이므로 플레이어가 힘 조절을 예측할 수 있습니다. 세 단계가 분리돼 있어 화살 타입을 바꿔도 입력 코드는 손대지 않습니다.
 
@@ -60,15 +60,15 @@ VR 환경에서 활을 당겨 화살을 쏘고 타워를 설치해 적 웨이브
 
 **문제.** 웨이브마다 스폰 지점·적 종류·간격이 달라 코드에 직접 쓰면 밸런스 조정 때마다 재빌드가 필요합니다.
 
-**선택.** `WaveData`에 스폰 패턴 목록을 두고, `WaveManager.ProcessWave`가 패턴마다 `SpawnEnemiesForPattern` 코루틴을 띄운 뒤 전부 끝나기를 기다립니다. 생존 적 수가 0이 되면 웨이브 종료 이벤트를 `EventManager`로 발행하고 보스전으로 넘어갑니다.
+**선택.** `WaveData`에 스폰 패턴 목록을 두고, `WaveManager.ProcessWave`가 패턴별 `SpawnEnemiesForPattern` 코루틴을 모두 시작한 뒤 완료를 기다리도록 했습니다. 종료는 스폰 완료와 별개로 `Update`에서 활성 스폰 지점의 생존 수가 0 이하인지 확인했습니다. 보상·영혼 수집 후 종료 이벤트를 보내고, 상점에서 다음 웨이브를 요청하면 인덱스 9 이상에서 보스 BGM·시작 이벤트 경로로 분기했습니다.
 
-**결과.** 웨이브 구성은 Inspector의 ScriptableObject에서 바꾸고, 진행 로직은 하나의 코루틴 흐름으로 읽힙니다.
+**결과.** 웨이브 구성은 ScriptableObject로 분리하고, 스폰 진행과 생존 수 기반 종료 판정은 따로 처리했습니다.
 
 - [WaveManager.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/01.WaveSystem/WaveManager.cs) · [WaveData.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/04.ScriptableObject/WaveData.cs) · [SpawnManager.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/01.WaveSystem/SpawnManager.cs)
 
 ## 트러블슈팅 — 처음 다루는 VR 입력을 작은 단위로 검증
 
-VR 개발 경험이 없어 입력·상호작용·발사를 한 번에 붙이면 어디서 문제가 나는지 알 수 없었습니다. Meta 공식 문서와 샘플을 기준으로 **컨트롤러 입력 읽기 → 당김 상태 표시 → 궤적 표시 → 실제 발사** 순서로 하나씩 확인하며 붙였습니다. 각 단계가 독립적으로 동작한 뒤에야 다음 단계를 연결했기 때문에, 발사가 안 될 때 입력 문제인지 궤적 계산 문제인지 바로 구분할 수 있었습니다.
+VR 개발 경험이 없어 입력·상호작용·발사를 한 번에 붙이면 어디서 문제가 나는지 알 수 없었습니다. Meta 공식 문서와 샘플을 기준으로 **컨트롤러 입력 읽기 → 차징 상태 표시 → 궤적 표시 → 실제 발사** 순서로 하나씩 확인하며 붙였습니다. 각 단계가 독립적으로 동작한 뒤에야 다음 단계를 연결했기 때문에, 발사가 안 될 때 입력 문제인지 궤적 계산 문제인지 바로 구분할 수 있었습니다.
 
 ## 프로젝트 구조
 
