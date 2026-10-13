@@ -50,9 +50,9 @@ VR 환경에서 트리거로 차징한 화살을 쏘고 타워를 설치해 적 
 
 **문제.** 화살·적·파티클·오디오가 반복 생성·파괴되고, 재사용한 화살에 이전 발사의 속도·충돌 상태가 남으면 엉뚱한 궤적이 나옵니다.
 
-**선택.** `ProjectilePool`이 화살 타입을 키로 `Dictionary<ProjectileType, IObjectPool<Projectile>>`을 보관하고, 꺼낼 때와 반환할 때 모두 `Projectile.ResetState()`를 호출합니다. `ResetState`는 자식 변환·속도·각속도·충돌·생성 시각·데미지를 초기화합니다. 적 풀은 활성화·위치만 맡고, 데이터 주입과 `Enemy.ResetState`는 `SpawnManager`가 합니다.
+**선택.** `ProjectilePool`이 화살 타입을 키로 `Dictionary<ProjectileType, IObjectPool<Projectile>>`을 보관하고, 꺼낼 때와 반환할 때 모두 `Projectile.ResetState()`를 호출합니다. `ResetState`는 자식 참조가 있으면 본체 위치·회전과 자식의 로컬 위치·회전을 초기화하고, 연결된 Rigidbody의 선속도·각속도를 0으로 설정한 뒤 깨웁니다. 연결된 MeshCollider를 껐다 켜고, 수명 기준 시각과 현재 데이터의 데미지를 다시 설정합니다. 적 풀은 활성화·위치만 맡고, 데이터 주입과 `Enemy.ResetState`는 `SpawnManager`가 합니다.
 
-**결과.** 현재 선택한 화살 타입에 맞는 풀에서 바로 꺼내 쓰고, 재사용 시 잔류 상태 문제가 코드 경로상 차단됩니다.
+**결과.** 현재 선택한 화살 타입에 맞는 풀에서 꺼내 쓰며, 재사용을 위한 상태 설정을 Get·Release 콜백의 `ResetState()` 호출로 모았습니다.
 
 - [ProjectilePool.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/06.ObjectPool/ProjectilePool.cs) · [Projectile.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/02.BowArrow/Projectile.cs) · [EnemyPool.cs](https://github.com/Femur-0607/Castle-Guardian-VR-Portfolio/blob/32f4f295413da73c82fcdd691d86c9fa91eb9b84/Assets/06.Scripts/06.ObjectPool/EnemyPool.cs)
 
